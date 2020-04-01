@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="TravelApp.MainPage"
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:d="http://xamarin.com/s/2014/forms/design"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:skia="clr-namespace:SkiaSharp.Views.Forms;assembly=SkiaSharp.Views.Forms"
+    xmlns:touch="clr-namespace:TouchEffect;assembly=TouchEffect"
+    x:Name="RootPage"
+    mc:Ignorable="d">
+
+    <Grid Padding="0">
+        <!--  Place new controls here  -->
+        <MediaElement
+            x:Name="Video"
+            Aspect="AspectFill"
+            BackgroundColor="Red"
+            HorizontalOptions="Fill"
+            IsLooping="True"
+            ShowsPlaybackControls="False"
+            Source="ms-appx:///oceanwaves.mp4"
+            VerticalOptions="Fill">
+            <MediaElement.Effects>
+                <touch:TouchEff Completed="TouchEff_Completed" />
+            </MediaElement.Effects>
+        </MediaElement>
+
+        <skia:SKCanvasView
+            x:Name="SkiaOverlay"
+            HorizontalOptions="Fill"
+            InputTransparent="True"
+            PaintSurface="SkiaOverlay_PaintSurface"
+            VerticalOptions="Fill" />
+
+    </Grid>
+
+</ContentPage>
