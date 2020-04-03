@@ -15,7 +15,6 @@
         <MediaElement
             x:Name="Video"
             Aspect="AspectFill"
-            BackgroundColor="Red"
             HorizontalOptions="Fill"
             IsLooping="True"
             ShowsPlaybackControls="False"

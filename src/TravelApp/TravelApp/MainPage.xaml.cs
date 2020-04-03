@@ -1,4 +1,5 @@
 ﻿using SkiaSharp;
+using SkiaSharp.Views.Forms;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,50 +15,143 @@ namespace TravelApp
     [DesignTimeVisible(false)]
     public partial class MainPage : ContentPage
     {
-        SKPaint backgroundPaint = new SKPaint()
+        SKPaint flyupPaint = new SKPaint()
         {
             Color = SKColors.White,
             Style = SKPaintStyle.Fill,
             IsAntialias = true
         };
-        private double _density;
 
-        float _cutoutPosPx = 0;
-        float _cutoutHeightPx;
-        private double _cutoutPos;
-        float _cutoutHeight = 300;
-        float _padding = 15;
-
-        enum State
+        SKPaint centerCirclePaint = new SKPaint()
         {
-            Collapsed,
-            Expanded
-        }
+            Color = Color.FromHex("1E2221").ToSKColor(),
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true
+        };
 
+
+        private double _density;
+        private SKBitmap mapbackground;
+
+        // constant values
+        const double padding = 15;
+        const double cellHeight = 300;
         State _currentState = State.Collapsed;
-        private float _expandValuePx;
+
+        // holds our animation values for states and current
+        private AnimationHelper anim = new AnimationHelper();
 
         public MainPage()
         {
             InitializeComponent();
             _density = Xamarin.Essentials.DeviceDisplay.MainDisplayInfo.Density;
-            _padding = 15 * (float)_density;
+            mapbackground = BitmapExtensions.LoadBitmapResource(this.GetType(), "TravelApp.Images.backgroundmap.png");
         }
-
-
 
         protected override void OnSizeAllocated(double width, double height)
         {
             base.OnSizeAllocated(width, height);
 
-            // how big should my cutout be
-            _cutoutHeightPx = (float)(_cutoutHeight * _density);
-            _cutoutPos = height - (_cutoutHeight + _padding);
-            _cutoutPosPx = (float)(_cutoutPos * _density);
-            Video.TranslationY = _cutoutPos;
+            SetupAnimations();
+            Video.TranslationY = anim.GetStateValue(AnimationKey.Cell, State.Collapsed);
+        }
+
+        private void SetupAnimations()
+        {
+            anim.SetStateValue(AnimationKey.Cell, State.Collapsed, this.Height - (cellHeight + padding));
+            anim.SetStateValue(AnimationKey.Cell, State.Expanded, 0);
+            anim[AnimationKey.Cell].Current = anim.GetStateValue(AnimationKey.Cell, State.Collapsed);
+
+            anim.SetStateValue(AnimationKey.Expand, State.Collapsed, 0);
+            anim.SetStateValue(AnimationKey.Expand, State.Expanded, this.Height);
+            anim[AnimationKey.Expand].Current = anim.GetStateValue(AnimationKey.Expand, State.Collapsed);
+
+            anim.SetStateValue(AnimationKey.FlyUp, State.Collapsed, this.Height);
+            anim.SetStateValue(AnimationKey.FlyUp, State.Expanded, this.Height - 300);
+            anim[AnimationKey.FlyUp].Current = anim.GetStateValue(AnimationKey.FlyUp, State.Collapsed);
+
+            anim.SetStateValue(AnimationKey.Circle, State.Collapsed, 0);
+            anim.SetStateValue(AnimationKey.Circle, State.Expanded, 50);
+            anim[AnimationKey.Circle].Current = anim.GetStateValue(AnimationKey.Circle, State.Collapsed);
         }
 
 
+        private void TouchEff_Completed(VisualElement sender, TouchEffect.EventArgs.TouchCompletedEventArgs args)
+        {
+            _currentState = _currentState == State.Collapsed ? State.Expanded : State.Collapsed;
+            GotoState(_currentState);
+        }
+
+        private void GotoState(State currentState)
+        {
+            // animate cutoutPos
+            Animation cutoutAnim = new Animation(
+                callback: t =>
+                {
+                    // adjust the position of the cutout
+                    anim[AnimationKey.Cell].Current = t;
+                    Video.TranslationY = t;
+                    
+                    SkiaOverlay.InvalidateSurface();
+
+                },
+                start: anim[AnimationKey.Cell].Current,
+                end: anim.GetStateValue(AnimationKey.Cell, currentState),
+                easing: Easing.SinInOut);
+
+
+            Animation expandAnim = new Animation(
+                callback: exp =>
+                {
+                    anim[AnimationKey.Expand].Current = exp;
+                    SkiaOverlay.InvalidateSurface();
+
+                },
+                start: anim[AnimationKey.Expand].Current,
+                end: anim.GetStateValue(AnimationKey.Expand, currentState),
+                easing: Easing.SinInOut);
+
+            Animation flyupAnim = new Animation(
+                callback: flyup =>
+                {
+                    anim[AnimationKey.FlyUp].Current = flyup;
+                    SkiaOverlay.InvalidateSurface();
+
+                },
+                start: anim[AnimationKey.FlyUp].Current,
+                end: anim.GetStateValue(AnimationKey.FlyUp, currentState),
+                easing: Easing.SinInOut);
+
+            Animation circleAnim = new Animation(
+                callback: circle =>
+                {
+                    anim[AnimationKey.Circle].Current = circle;
+                    SkiaOverlay.InvalidateSurface();
+
+                },
+                start: anim[AnimationKey.Circle].Current,
+                end: anim.GetStateValue(AnimationKey.Circle, currentState),
+                easing: Easing.SpringOut);
+
+            Animation parentAnimation = new Animation();
+
+            if (currentState == State.Expanded)
+            {
+                parentAnimation.Add(0.00, 0.50, cutoutAnim);
+                parentAnimation.Add(0.50, 0.70, expandAnim);
+                parentAnimation.Add(0.70, 0.90, flyupAnim);
+                parentAnimation.Add(0.85, 1.00, circleAnim);
+            }
+            else
+            {
+                parentAnimation.Add(0.00, 0.15, circleAnim);
+                parentAnimation.Add(0.10, 0.30, flyupAnim);
+                parentAnimation.Add(0.30, 0.50, expandAnim);
+                parentAnimation.Add(0.50, 1.00, cutoutAnim);
+            }
+
+            parentAnimation.Commit(this, "ExpandAnimation", 16, 2000);
+        }
 
         private void SkiaOverlay_PaintSurface(object sender, SkiaSharp.Views.Forms.SKPaintSurfaceEventArgs e)
         {
@@ -67,115 +161,72 @@ namespace TravelApp
 
             canvas.Clear();
 
-            float left = _padding;
-            float top = _cutoutPosPx;
-            float right = info.Width - _padding;
-            float bottom = top + _cutoutHeightPx;
+            float paddingPx = (float)padding * (float)_density;
 
-            // adjuist the cutout based on the expand animation
-            if (_expandValuePx > 0)
+            float left = paddingPx;
+            float top = (float)(anim[AnimationKey.Cell].Current * _density) + paddingPx;
+            float right = info.Width - paddingPx;
+            float bottom = top + (float)(cellHeight * _density) - paddingPx;
+
+            // adjust the cutout based on the expand animation
+            float expandValue = (float)(anim[AnimationKey.Expand].Current * _density);
+
+            if (expandValue > 0)
             {
                 // change the values
-                left -= _expandValuePx;
+                left -= expandValue;
                 if (left < 0) left = 0;
 
-                right += _expandValuePx;
+                right += expandValue;
                 if (right > info.Width) right = info.Width;
 
-                top -= _expandValuePx;
+                top -= expandValue;
                 if (top < 0) top = 0;
 
-                bottom += _expandValuePx;
+                bottom += expandValue;
                 if (bottom > info.Height) bottom = info.Height;
             }
 
-            System.Diagnostics.Debug.WriteLine($"Rect Bounds {left}, {top}, {right}, {bottom}");
-
             // create a cutout
-            var cutoutRect = new SKRect(left, top, right, bottom);
-            canvas.ClipRoundRect(new SKRoundRect(cutoutRect, _padding, _padding),
-                SKClipOperation.Difference, true);
+            var cornerRadius = (paddingPx * 2) - expandValue;
+
+            // store the state of the canvas
+            using (new SKAutoCanvasRestore(canvas))
+            {
+
+                var cutoutRect = new SKRect(left, top, right, bottom);
+                canvas.ClipRoundRect(new SKRoundRect(cutoutRect, cornerRadius, cornerRadius),
+                    SKClipOperation.Difference, true);
+
+                // draw the background
+                SKRect backgroundRect = new SKRect(0, 0, info.Width, info.Height);
+                canvas.DrawBitmap(mapbackground, backgroundRect, BitmapStretch.AspectFill);
+            }
+
+            // draw the flyup - but only when it should be
+            float flyupPos = (float)(anim[AnimationKey.FlyUp].Current * _density);
+            float circleRadius = (float)(anim[AnimationKey.Circle].Current * _density);
 
 
-            // draw the background
-            canvas.DrawRect(new SKRect(0, 0, info.Width, info.Height), backgroundPaint);
+            if (flyupPos < info.Height)
+            {
+                SKPoint circleCenter = new SKPoint(info.Width / 2, flyupPos);
+
+                // draw the center circle
+                canvas.DrawCircle(circleCenter, circleRadius - (float)(10 * _density), centerCirclePaint);
+
+                // create a circle clip
+                SKPath circlePath = new SKPath();
+                circlePath.AddCircle(info.Width / 2, flyupPos, circleRadius);
+                canvas.ClipPath(circlePath, SKClipOperation.Difference, true);
+
+                SKRect flyupRect = new SKRect(0, flyupPos, info.Width, info.Height);
+                canvas.DrawRect(flyupRect, flyupPaint);
+            }
 
         }
 
-
-        private void TouchEff_Completed(VisualElement sender, TouchEffect.EventArgs.TouchCompletedEventArgs args)
-        {
-            _currentState = _currentState == State.Collapsed ? State.Expanded : State.Collapsed;
-            GotoState(_currentState);
-
-        }
-
-        private void GotoState(State currentState)
-        {
-            double startPos = 0;
-            double endPos = 0;
-            double startExpand = 0;
-            double endExpand = 0;
-            
-
-            if (currentState == State.Collapsed)
-            {
-                startPos = 0;
-                //endPos = this.Height - ((_cutoutHeightPx + _padding) / _density);
-                endPos = this.Height - (_cutoutHeight + _padding);
-
-                startExpand = this.Height;
-                endExpand = 0;
-            }
-            else
-            {
-                endPos = 0;
-                startPos = this.Height - (_cutoutHeight + _padding);
-
-                startExpand = 0;
-                endExpand = this.Height;
-            }
-
-            // set our initial value
-            _cutoutPosPx = (float)startPos * (float)_density;
-            _expandValuePx = (float)startExpand * (float)(_density);
-
-            // animate cutoutPos
-            Animation cutoutAnim = new Animation(t =>
-            {
-                // adjust the position of the cutout
-                _cutoutPosPx = (float)t * (float)_density;
-                // adjust position of video to match
-                Video.TranslationY = t;
-                // invalidate the canvas
-                SkiaOverlay.InvalidateSurface();
-
-            }, startPos, endPos, Easing.SinInOut);
-
-
-            Animation expandAnim = new Animation(exp =>
-            {
-                // adjust the position of the cutout
-                _expandValuePx = (float)exp * (float)_density;
-                // invalidate the canvas
-                SkiaOverlay.InvalidateSurface();
-
-            }, startExpand, endExpand, Easing.SinInOut);
-
-            Animation parentAnimation = new Animation();
-
-            if (currentState == State.Expanded)
-            {
-                parentAnimation.Add(0.00, 0.50, cutoutAnim);
-                parentAnimation.Add(0.50, 1.00, expandAnim);
-            }
-            else
-            {
-                parentAnimation.Add(0.0, 0.50, expandAnim);
-                parentAnimation.Add(0.50, 1.00, cutoutAnim);
-            }
-
-            parentAnimation.Commit(this, "ExpandAnimation", 16, 2000);
-        }
     }
+
+
 }
