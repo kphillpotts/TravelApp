@@ -11,10 +11,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Fonts\FrankRuhlLibre-Black.ttf" />
+    <None Remove="Fonts\Mada-Light.ttf" />
+    <None Remove="Fonts\Mada-Regular.ttf" />
+    <None Remove="Images\Aircraft.png" />
     <None Remove="Images\backgroundmap.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Fonts\Mada-Light.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Fonts\Mada-Regular.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Images\Aircraft.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Images\backgroundmap.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -23,7 +36,13 @@
   <ItemGroup>
     <PackageReference Include="SkiaSharp.Views.Forms" Version="1.68.1.1" />
     <PackageReference Include="TouchView" Version="4.1.30" />
-    <PackageReference Include="Xamarin.Forms" Version="4.5.0.495" />
-    <PackageReference Include="Xamarin.Essentials" Version="1.5.1" />
+    <PackageReference Include="Xamarin.Forms" Version="4.5.0.617" />
+    <PackageReference Include="Xamarin.Essentials" Version="1.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Fonts\FrankRuhlLibre-Black.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

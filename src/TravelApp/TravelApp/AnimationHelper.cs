@@ -17,6 +17,9 @@ namespace TravelApp
         Expand,
         FlyUp,
         Circle,
+        CollapsedTextOpacity,
+        CollapsedTextPos,
+        ExpandedTextOpacity,
     }
 
 

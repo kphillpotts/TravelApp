@@ -32,11 +32,13 @@ namespace TravelApp
 
         private double _density;
         private SKBitmap mapbackground;
+        private SKBitmap aircraftImage;
 
         // constant values
         const double padding = 15;
         const double cellHeight = 300;
         State _currentState = State.Collapsed;
+        double flyupHeight;
 
         // holds our animation values for states and current
         private AnimationHelper anim = new AnimationHelper();
@@ -46,11 +48,16 @@ namespace TravelApp
             InitializeComponent();
             _density = Xamarin.Essentials.DeviceDisplay.MainDisplayInfo.Density;
             mapbackground = BitmapExtensions.LoadBitmapResource(this.GetType(), "TravelApp.Images.backgroundmap.png");
+            aircraftImage = BitmapExtensions.LoadBitmapResource(this.GetType(), "TravelApp.Images.Aircraft.png");
         }
 
         protected override void OnSizeAllocated(double width, double height)
         {
             base.OnSizeAllocated(width, height);
+
+            flyupHeight = height * .4;
+
+            ExpandedText.HeightRequest = flyupHeight - 50;
 
             SetupAnimations();
             Video.TranslationY = anim.GetStateValue(AnimationKey.Cell, State.Collapsed);
@@ -67,23 +74,39 @@ namespace TravelApp
             anim[AnimationKey.Expand].Current = anim.GetStateValue(AnimationKey.Expand, State.Collapsed);
 
             anim.SetStateValue(AnimationKey.FlyUp, State.Collapsed, this.Height);
-            anim.SetStateValue(AnimationKey.FlyUp, State.Expanded, this.Height - 300);
+            anim.SetStateValue(AnimationKey.FlyUp, State.Expanded, this.Height - flyupHeight);
             anim[AnimationKey.FlyUp].Current = anim.GetStateValue(AnimationKey.FlyUp, State.Collapsed);
 
             anim.SetStateValue(AnimationKey.Circle, State.Collapsed, 0);
             anim.SetStateValue(AnimationKey.Circle, State.Expanded, 50);
             anim[AnimationKey.Circle].Current = anim.GetStateValue(AnimationKey.Circle, State.Collapsed);
+
+            anim.SetStateValue(AnimationKey.CollapsedTextOpacity, State.Collapsed, 1);
+            anim.SetStateValue(AnimationKey.CollapsedTextOpacity, State.Expanded, 0);
+            anim[AnimationKey.CollapsedTextOpacity].Current = anim.GetStateValue(AnimationKey.CollapsedTextOpacity, State.Collapsed);
+
+            anim.SetStateValue(AnimationKey.ExpandedTextOpacity, State.Collapsed, 0);
+            anim.SetStateValue(AnimationKey.ExpandedTextOpacity, State.Expanded, 1);
+            anim[AnimationKey.ExpandedTextOpacity].Current = anim.GetStateValue(AnimationKey.ExpandedTextOpacity, State.Collapsed);
         }
 
 
         private void TouchEff_Completed(VisualElement sender, TouchEffect.EventArgs.TouchCompletedEventArgs args)
         {
             _currentState = _currentState == State.Collapsed ? State.Expanded : State.Collapsed;
+
+            this.AbortAnimation("ExpandAnimation");
             GotoState(_currentState);
         }
 
         private void GotoState(State currentState)
         {
+            // deal with issue of input transparecy
+            if (currentState == State.Expanded)
+                ExpandedText.InputTransparent = false;
+            else
+                ExpandedText.InputTransparent = true;
+
             // animate cutoutPos
             Animation cutoutAnim = new Animation(
                 callback: t =>
@@ -133,21 +156,45 @@ namespace TravelApp
                 end: anim.GetStateValue(AnimationKey.Circle, currentState),
                 easing: Easing.SpringOut);
 
+            Animation collapsedTextAnim = new Animation(
+                callback: o =>
+                {
+                    CollapsedText.Opacity = o;
+                },
+                start: anim[AnimationKey.CollapsedTextOpacity].Current,
+                end: anim.GetStateValue(AnimationKey.CollapsedTextOpacity, currentState),
+                easing: Easing.Linear);
+
+            Animation expandedTextAnim = new Animation(
+                callback: o =>
+                {
+                    ExpandedText.Opacity = o;
+                },
+                start: anim[AnimationKey.ExpandedTextOpacity].Current,
+                end: anim.GetStateValue(AnimationKey.ExpandedTextOpacity, currentState),
+                easing: Easing.Linear);
+
+
             Animation parentAnimation = new Animation();
 
             if (currentState == State.Expanded)
             {
+                parentAnimation.Add(0.00, 0.25, collapsedTextAnim);
                 parentAnimation.Add(0.00, 0.50, cutoutAnim);
                 parentAnimation.Add(0.50, 0.70, expandAnim);
                 parentAnimation.Add(0.70, 0.90, flyupAnim);
+                parentAnimation.Add(0.80, 0.90, expandedTextAnim);
                 parentAnimation.Add(0.85, 1.00, circleAnim);
             }
             else
             {
                 parentAnimation.Add(0.00, 0.15, circleAnim);
                 parentAnimation.Add(0.10, 0.30, flyupAnim);
+                parentAnimation.Add(0.20, 0.30, expandedTextAnim);
                 parentAnimation.Add(0.30, 0.50, expandAnim);
                 parentAnimation.Add(0.50, 1.00, cutoutAnim);
+                parentAnimation.Add(0.75, 1.00, collapsedTextAnim);
+
             }
 
             parentAnimation.Commit(this, "ExpandAnimation", 16, 2000);
@@ -214,6 +261,14 @@ namespace TravelApp
 
                 // draw the center circle
                 canvas.DrawCircle(circleCenter, circleRadius - (float)(10 * _density), centerCirclePaint);
+
+                // add the aircraft image
+                float aircraftScale= .6f;
+                float aircraftSize = (circleRadius * 2f) * aircraftScale;
+                SKRect aircraftRect = new SKRect(0, 0, aircraftSize, aircraftSize);
+                aircraftRect.Location = new SKPoint((info.Width / 2) - (aircraftSize / 2),
+                    flyupPos - (aircraftSize / 2));
+                canvas.DrawBitmap(aircraftImage, aircraftRect, BitmapStretch.AspectFit);
 
                 // create a circle clip
                 SKPath circlePath = new SKPath();

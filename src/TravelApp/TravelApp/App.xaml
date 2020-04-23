@@ -1,11 +1,49 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<Application xmlns="http://xamarin.com/schemas/2014/forms"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d"
-             x:Class="TravelApp.App">
+<Application
+    x:Class="TravelApp.App"
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
     <Application.Resources>
+        <ResourceDictionary>
+
+            <Color x:Key="ExpandedTextColor">#434E4C</Color>
+
+            <Style x:Key="TitleCollapsed" TargetType="Label">
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="FontFamily" Value="HeaderFont-Black" />
+                <Setter Property="FontSize" Value="30" />
+            </Style>
+
+            <Style x:Key="SubtitleCollapsed" TargetType="Label">
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="FontFamily" Value="BodyFont-Regular" />
+                <Setter Property="FontSize" Value="16" />
+            </Style>
+
+            <Style x:Key="TitleExpanded" TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource ExpandedTextColor}" />
+                <Setter Property="FontFamily" Value="HeaderFont-Black" />
+                <Setter Property="FontSize" Value="32" />
+            </Style>
+
+            <Style x:Key="SubtitleExpanded" TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource ExpandedTextColor}" />
+                <Setter Property="FontFamily" Value="BodyFont-Regular" />
+                <Setter Property="FontSize" Value="16" />
+            </Style>
+
+            <Style x:Key="TextExpanded" TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource ExpandedTextColor}" />
+                <Setter Property="FontFamily" Value="BodyFont-Light" />
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="LineHeight" Value="1.25" />
+            </Style>
+
+        </ResourceDictionary>
 
     </Application.Resources>
 </Application>

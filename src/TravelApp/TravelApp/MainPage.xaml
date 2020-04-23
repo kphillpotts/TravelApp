@@ -4,6 +4,7 @@
     xmlns="http://xamarin.com/schemas/2014/forms"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:d="http://xamarin.com/s/2014/forms/design"
+    xmlns:ios="clr-namespace:Xamarin.Forms.PlatformConfiguration.iOSSpecific;assembly=Xamarin.Forms.Core"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:skia="clr-namespace:SkiaSharp.Views.Forms;assembly=SkiaSharp.Views.Forms"
     xmlns:touch="clr-namespace:TouchEffect;assembly=TouchEffect"
@@ -12,18 +13,34 @@
 
     <Grid Padding="0">
         <!--  Place new controls here  -->
-        <MediaElement
+        <Grid
             x:Name="Video"
-            Aspect="AspectFill"
-            HorizontalOptions="Fill"
-            IsLooping="True"
-            ShowsPlaybackControls="False"
-            Source="ms-appx:///oceanwaves.mp4"
-            VerticalOptions="Fill">
-            <MediaElement.Effects>
-                <touch:TouchEff Completed="TouchEff_Completed" />
-            </MediaElement.Effects>
-        </MediaElement>
+            Padding="0"
+            ColumnSpacing="0"
+            RowSpacing="0">
+            <MediaElement
+                Aspect="AspectFill"
+                HorizontalOptions="Fill"
+                IsLooping="True"
+                ShowsPlaybackControls="False"
+                Source="ms-appx:///oceanwaves.mp4"
+                VerticalOptions="Fill">
+                <MediaElement.Effects>
+                    <touch:TouchEff Completed="TouchEff_Completed" />
+                </MediaElement.Effects>
+            </MediaElement>
+
+            <StackLayout
+                x:Name="CollapsedText"
+                Margin="40"
+                HorizontalOptions="Start"
+                TranslationY="170"
+                VerticalOptions="Start">
+                <Label Style="{StaticResource SubtitleCollapsed}" Text="FRANCE" />
+                <Label Style="{StaticResource TitleCollapsed}" Text="Cannes" />
+            </StackLayout>
+
+        </Grid>
 
         <skia:SKCanvasView
             x:Name="SkiaOverlay"
@@ -31,6 +48,37 @@
             InputTransparent="True"
             PaintSurface="SkiaOverlay_PaintSurface"
             VerticalOptions="Fill" />
+
+        <StackLayout
+            x:Name="ExpandedText"
+            HeightRequest="240"
+            InputTransparent="True"
+            Opacity="0"
+            VerticalOptions="End">
+            <Label
+                HorizontalOptions="Center"
+                HorizontalTextAlignment="Center"
+                Style="{StaticResource TitleExpanded}"
+                Text="Cannes" />
+
+            <Label
+                HorizontalOptions="Center"
+                HorizontalTextAlignment="Center"
+                Style="{StaticResource SubtitleExpanded}"
+                Text="FRANCE" />
+
+            <BoxView
+                Margin="0,20"
+                HeightRequest="3"
+                HorizontalOptions="Center"
+                WidthRequest="64"
+                Color="#49BFBD" />
+            <ScrollView Margin="30,0,20,0" Orientation="Vertical">
+                <Label Style="{StaticResource TextExpanded}" Text="Glamorous Cannes sets camera flashes popping at its film festival in May, when stars pose in tuxes and full-length gowns on the red carpet. But the glitz doesn't end there. Throughout the year, as you walk among the designer bars, couture shops and palaces of La Croisette, the wealth and glamour of this city cannot fail to impress. Admiring Ferraris and Porsches and celebrity-spotting on the chic sunlounger-striped beaches and liner-sized yachts moored at the port are perennial Cannes pastimes." />
+            </ScrollView>
+
+        </StackLayout>
+
 
     </Grid>
 
